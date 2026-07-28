@@ -1,0 +1,14 @@
+{
+  "name": "Respostas - Painel",
+  "short_name": "Respostas",
+  "description": "Painel para ver as respostas do questionário",
+  "start_url": "./admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0F1218",
+  "theme_color": "#0F1218",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
