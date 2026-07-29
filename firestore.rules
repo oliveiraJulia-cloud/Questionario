@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Coleção onde o questionário grava as respostas.
+    // Precisa bater com NOME_DA_COLECAO definido no index.html (padrão: "respostas")
+    match /respostas/{docId} {
+
+      // Qualquer visitante pode ENVIAR uma resposta (criar um novo documento).
+      allow create: if true;
+
+      // Só quem estiver logado (você, pelo admin.html ou pelo Console) pode LER ou EXCLUIR.
+      // Ninguém consegue editar pelo site.
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null;
+      allow update: if false;
+    }
+
+    // Bloqueia qualquer outra coleção por padrão.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
