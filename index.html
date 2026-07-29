@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Questionário — Desenvolvimento de Aplicativo Personalizado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1218;
+    --panel:#171B24;
+    --panel-2:#1D222D;
+    --line:#2A2F3B;
+    --text:#E9ECF3;
+    --text-dim:#9AA1B2;
+    --accent:#4FD1C5;
+    --accent-dim:#2E8F86;
+    --accent-2:#8B7FE0;
+    --danger:#F97066;
+    --warn-bg:#3A2B14;
+    --warn-text:#F2C069;
+    --radius:16px;
+    --mono:'JetBrains Mono', monospace;
+    --display:'Space Grotesk', sans-serif;
+    --body:'Inter', sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; overflow-x:hidden;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(79,209,197,0.08), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgba(139,127,224,0.08), transparent 45%),
+      var(--ink);
+    color:var(--text);
+    font-family:var(--body);
+    min-height:100vh;
+    min-height:100svh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px 16px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .config-warning{
+    position:fixed; top:0; left:0; right:0;
+    background:var(--warn-bg); color:var(--warn-text);
+    font-family:var(--mono); font-size:12px;
+    text-align:center; padding:8px 12px;
+    z-index:999; letter-spacing:.02em;
+    display:none;
+  }
+  .config-warning.show{display:block;}
+
+  .window{
+    width:100%;
+    max-width:640px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02);
+    animation:rise .6s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise{
+    from{opacity:0; transform:translateY(14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .progress-track{
+    height:3px;
+    background:var(--line);
+    position:relative;
+  }
+  .progress-fill{
+    position:absolute; top:0; left:0; height:100%;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    width:12.5%;
+    transition:width .45s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .body-area{ padding:32px 28px 28px; }
+  @media (max-width:480px){ .body-area{ padding:24px 20px 20px; } }
+
+  .step-label{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .step-label span.total{ color:var(--text-dim); }
+
+  h1{
+    font-family:var(--display);
+    font-size:23px;
+    font-weight:600;
+    margin:0 0 6px;
+    letter-spacing:-.01em;
+    line-height:1.25;
+  }
+  .sub{
+    color:var(--text-dim);
+    font-size:14px;
+    margin:0 0 26px;
+    line-height:1.5;
+  }
+
+  .step{ display:none; animation:fade .35s ease; }
+  .step.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateX(6px);} to{opacity:1; transform:translateX(0);} }
+
+  .intro{ display:none; animation:fade .4s ease; }
+  .intro.active{ display:block; }
+  .intro h1{ font-size:25px; margin-bottom:14px; }
+
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:500;
+    color:var(--text);
+    margin:18px 0 8px;
+  }
+  label:first-of-type{ margin-top:0; }
+  label .req{ color:var(--accent); }
+  label .opt{ color:var(--text-dim); font-weight:400; }
+  .hint{
+    font-size:12px;
+    color:var(--text-dim);
+    margin:-4px 0 8px;
+    line-height:1.4;
+  }
+
+  input[type=text], input[type=email], input[type=tel], textarea, select{
+    width:100%;
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:10px;
+    padding:12px 14px;
+    font-family:var(--body);
+    font-size:15px;
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  textarea{ resize:vertical; min-height:80px; line-height:1.5; }
+  input::placeholder, textarea::placeholder{ color:#5B6172; }
+
+  input:focus, textarea:focus, select:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(79,209,197,0.15);
+  }
+
+  .option-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .option-grid.single-col{ grid-template-columns:1fr; }
+  @media (max-width:420px){ .option-grid{ grid-template-columns:1fr; } }
+
+  .option-card{
+    border:1px solid var(--line);
+    background:var(--ink);
+    border-radius:10px;
+    padding:14px;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    position:relative;
+  }
+  .option-card:hover{ border-color:#3D4456; }
+  .option-card input{ position:absolute; opacity:0; }
+  .option-card .title{ font-size:14px; font-weight:500; }
+  .option-card .desc{ font-size:12px; color:var(--text-dim); margin-top:3px; }
+  .option-card.checked{
+    border-color:var(--accent);
+    background:rgba(79,209,197,0.08);
+  }
+  .option-card.checked .title{ color:var(--accent); }
+
+  .conditional-field{
+    display:none;
+    margin-top:10px;
+  }
+  .conditional-field.show{ display:block; }
+
+  .note-box{
+    font-size:12.5px;
+    color:var(--text-dim);
+    background:var(--ink);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-top:18px;
+    line-height:1.5;
+  }
+  .note-box strong{ color:var(--text); }
+
+  .closing-note{
+    font-size:13.5px;
+    color:var(--text-dim);
+    line-height:1.6;
+    background:var(--ink);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-top:18px;
+  }
+
+  .nav-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:28px;
+    gap:12px;
+  }
+  button{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:14.5px;
+    border-radius:10px;
+    padding:12px 20px;
+    border:none;
+    cursor:pointer;
+    transition:transform .12s, opacity .12s, background .15s;
+  }
+  button:active{ transform:scale(.97); }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#0B0E13;
+    margin-left:auto;
+  }
+  .btn-primary:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-ghost{
+    background:transparent;
+    color:var(--text-dim);
+    border:1px solid var(--line);
+  }
+  .btn-ghost:hover{ color:var(--text); border-color:#3D4456; }
+  .btn-ghost.invisible{ visibility:hidden; }
+
+  .error-msg{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--danger);
+    margin-top:10px;
+    display:none;
+  }
+  .error-msg.show{ display:block; }
+
+  .success{
+    display:none;
+    text-align:center;
+    padding:20px 4px 6px;
+  }
+  .success.active{ display:block; animation:fade .4s ease; }
+  .check-circle{
+    width:56px; height:56px;
+    border-radius:50%;
+    background:rgba(79,209,197,0.12);
+    border:1px solid var(--accent-dim);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 18px;
+  }
+  .success h2{
+    font-family:var(--display);
+    font-size:21px; margin:0 0 8px;
+  }
+  .success p{ color:var(--text-dim); font-size:14px; line-height:1.55; margin:0; }
+  .success p + p{ margin-top:10px; }
+
+  .footer-note{
+    text-align:center;
+    font-family:var(--mono);
+    font-size:10.5px;
+    color:#4A5063;
+    padding:16px 0 2px;
+    letter-spacing:.03em;
+  }
+</style>
+</head>
+<body>
+
+<div class="config-warning" id="configWarning">⚠ FIREBASE NÃO CONFIGURADO — edite firebaseConfig no final do arquivo index.html</div>
+
+<div class="window">
+  <div class="progress-track" id="progressTrack" style="display:none;"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div class="body-area">
+
+    <div class="intro active" id="introScreen">
+      <h1>Questionário para desenvolvimento de aplicativo personalizado</h1>
+      <p class="sub">Obrigado pelo interesse! Este questionário ajuda a entender exatamente o que você deseja para o aplicativo, para eu planejar o desenvolvimento e montar um orçamento mais preciso.</p>
+      <div class="nav-row">
+        <button type="button" class="btn-ghost invisible">Voltar</button>
+        <button type="button" class="btn-primary" id="btnStart">Começar</button>
+      </div>
+    </div>
+
+    <form id="quizForm" novalidate style="display:none;">
+
+      <!-- STEP 1 — Informações básicas -->
+      <div class="step active" data-step="1">
+        <div class="step-label"><span>Passo 01</span><span class="total">de 08</span></div>
+        <h1>Informações básicas</h1>
+        <p class="sub">Só preciso de um jeito de te responder com uma proposta.</p>
+
+        <label>Nome <span class="req">*</span></label>
+        <input type="text" id="nome" placeholder="Seu nome" required>
+
+        <label>Empresa <span class="opt">(caso o projeto não seja pessoal)</span></label>
+        <input type="text" id="empresa" placeholder="Nome da empresa">
+
+        <label>E-mail <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="voce@email.com" required>
+
+        <div class="error-msg" id="err1">Preencha nome e e-mail para continuar.</div>
+      </div>
+
+      <!-- STEP 2 — Sobre o projeto -->
+      <div class="step" data-step="2">
+        <div class="step-label"><span>Passo 02</span><span class="total">de 08</span></div>
+        <h1>Sobre o projeto</h1>
+        <p class="sub">Alguns detalhes gerais sobre quem vai usar o aplicativo.</p>
+
+        <label>Qual será o nome do aplicativo? <span class="opt">(caso já tenha escolhido)</span></label>
+        <input type="text" id="nomeApp" placeholder="Nome do aplicativo">
+
+        <label>Quem utilizará o aplicativo? <span class="req">*</span></label>
+        <div class="option-grid" id="quemVai">
+          <label class="option-card" data-value="Apenas eu">
+            <input type="radio" name="quemVai">
+            <div class="title">Apenas eu</div>
+          </label>
+          <label class="option-card" data-value="Uma equipe selecionada">
+            <input type="radio" name="quemVai">
+            <div class="title">Uma equipe selecionada</div>
+          </label>
+          <label class="option-card" data-value="Meus clientes">
+            <input type="radio" name="quemVai">
+            <div class="title">Meus clientes</div>
+          </label>
+          <label class="option-card" data-value="Outro">
+            <input type="radio" name="quemVai">
+            <div class="title">Outro</div>
+          </label>
+        </div>
+        <div class="conditional-field" id="quemVaiOutroWrap">
+          <input type="text" id="quemVaiOutro" placeholder="Descreva quem vai usar">
+        </div>
+        <div class="error-msg" id="err2">Escolha quem vai utilizar o aplicativo para continuar.</div>
+      </div>
+
+      <!-- STEP 3 — Funcionalidade principal -->
+      <div class="step" data-step="3">
+        <div class="step-label"><span>Passo 03</span><span class="total">de 08</span></div>
+        <h1>Funcionalidade principal</h1>
+        <p class="sub">Descreva como você imagina o funcionamento do aplicativo.</p>
+
+        <div class="hint">Exemplos: controle financeiro, controle de clientes, cadastro de produtos, agenda, registro de contratos, controle de estoque, orçamentos, checklist, entre outros.</div>
+
+        <label>Como você imagina o funcionamento? <span class="req">*</span></label>
+        <div class="hint">Exemplo: uma agenda integrada ao cadastro de clientes e ao controle financeiro, ou um controle financeiro com lembretes automáticos.</div>
+        <textarea id="funcionamento" placeholder="Descreva como imagina o aplicativo funcionando..." required></textarea>
+        <div class="error-msg" id="err3b">Descreva como imagina o funcionamento para continuar.</div>
+      </div>
+
+      <!-- STEP 4 — Funcionamento -->
+      <div class="step" data-step="4">
+        <div class="step-label"><span>Passo 04</span><span class="total">de 08</span></div>
+        <h1>Funcionamento</h1>
+        <p class="sub">Como e onde o aplicativo vai rodar.</p>
+
+        <label>Como você deseja utilizar o aplicativo? <span class="req">*</span></label>
+        <div class="option-grid single-col" id="comoUsar">
+          <label class="option-card" data-value="Apenas online"><input type="radio" name="comoUsar"><div class="title">Apenas online</div></label>
+          <label class="option-card" data-value="Online e offline"><input type="radio" name="comoUsar"><div class="title">Online e offline</div></label>
+          <label class="option-card" data-value="Não sei, gostaria de orientação"><input type="radio" name="comoUsar"><div class="title">Não sei, gostaria de orientação</div></label>
+        </div>
+        <div class="error-msg" id="err4a">Escolha uma opção para continuar.</div>
+
+        <label>Em quais dispositivos ele será utilizado? <span class="req">*</span></label>
+        <div class="option-grid" id="dispositivos">
+          <label class="option-card" data-value="Celular Android"><input type="checkbox"><div class="title">Celular Android</div></label>
+          <label class="option-card" data-value="iPhone"><input type="checkbox"><div class="title">iPhone</div></label>
+          <label class="option-card" data-value="Computador"><input type="checkbox"><div class="title">Computador</div></label>
+          <label class="option-card" data-value="Tablet"><input type="checkbox"><div class="title">Tablet</div></label>
+        </div>
+        <div class="error-msg" id="err4b">Escolha ao menos um dispositivo para continuar.</div>
+
+        <div class="note-box"><strong>Observação:</strong> o valor do orçamento pode variar caso o aplicativo precise funcionar simultaneamente para várias pessoas ou em vários dispositivos.</div>
+      </div>
+
+      <!-- STEP 5 — Aparência -->
+      <div class="step" data-step="5">
+        <div class="step-label"><span>Passo 05</span><span class="total">de 08</span></div>
+        <h1>Aparência</h1>
+        <p class="sub">Preferências visuais para o aplicativo.</p>
+
+        <label>Existe alguma cor principal que você gostaria de utilizar?</label>
+        <div class="hint">Exemplo: fundo branco com menus em azul.</div>
+        <input type="text" id="corPrincipal" placeholder="Ex: fundo branco com menus em azul">
+
+        <label>Existe algum aplicativo cujo visual você gosta e gostaria de usar como referência?</label>
+        <input type="text" id="referenciaVisual" placeholder="Se sim, qual?">
+      </div>
+
+      <!-- STEP 6 — Referências -->
+      <div class="step" data-step="6">
+        <div class="step-label"><span>Passo 06</span><span class="total">de 08</span></div>
+        <h1>Referências</h1>
+        <p class="sub">Aplicativos ou sites parecidos com o que você imagina.</p>
+
+        <label>Existe algum aplicativo ou site que você já use? Ou algo parecido com o que você deseja?</label>
+        <textarea id="referenciaApp" placeholder="Nome do app/site..."></textarea>
+
+        <label>O que você mais gosta nele?</label>
+        <textarea id="referenciaGosta" placeholder="O que chama atenção nesse app/site..."></textarea>
+      </div>
+
+      <!-- STEP 7 — Dados -->
+      <div class="step" data-step="7">
+        <div class="step-label"><span>Passo 07</span><span class="total">de 08</span></div>
+        <h1>Dados</h1>
+        <p class="sub">Informações sobre o que será armazenado no aplicativo.</p>
+
+        <label>Que tipo de informações serão armazenadas no aplicativo?</label>
+        <textarea id="tipoDados" placeholder="Ex: dados de clientes, valores financeiros, contratos..."></textarea>
+
+        <label>Existe alguma informação confidencial que precise ser protegida por senha?</label>
+        <label>Ou que precise de login com permissões diferentes para cada pessoa?</label>
+        <textarea id="seguranca" placeholder="Descreva se há necessidade de login, senha ou permissões..."></textarea>
+      </div>
+
+      <!-- STEP 8 — Prazo de entrega -->
+      <div class="step" data-step="8">
+        <div class="step-label"><span>Passo 08</span><span class="total">de 08</span></div>
+        <h1>Prazo de entrega</h1>
+        <p class="sub">Existe alguma data em que você precisa que o aplicativo esteja pronto?</p>
+
+        <input type="text" id="prazo" placeholder="Ex: até dezembro, ou sem prazo definido">
+      </div>
+
+    </form>
+
+    <div class="nav-row" id="navRow" style="display:none;">
+      <button type="button" class="btn-ghost invisible" id="btnBack">Voltar</button>
+      <button type="button" class="btn-primary" id="btnNext">Continuar</button>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success" id="successScreen">
+      <div class="check-circle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M4 12.5L9.5 18L20 6" stroke="#4FD1C5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>Respostas enviadas.</h2>
+      <p>Com essas informações, posso analisar o projeto e retornar com uma estimativa de prazo, custo e possíveis sugestões para o desenvolvimento.</p>
+      <p>Muito obrigada por responder! 😊</p>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer-note">conexão segura • suas respostas não ficam visíveis publicamente</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  // ======================================================
+  // 1) SUBSTITUA pelos dados do SEU projeto Firebase.
+  //    Console > Configurações do projeto > Seus apps > SDK
+  // ======================================================
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU_PROJETO.firebaseapp.com",
+    projectId: "SEU_PROJETO",
+    storageBucket: "SEU_PROJETO.appspot.com",
+    messagingSenderId: "SEU_SENDER_ID",
+    appId: "SEU_APP_ID"
+  };
+
+  const NOME_DA_COLECAO = "respostas"; // nome da "tabela" no Firestore
+
+  let db = null;
+  let firebaseReady = false;
+
+  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "SUA_API_KEY") {
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      firebaseReady = true;
+    } catch (e) {
+      console.error("Erro ao iniciar Firebase:", e);
+    }
+  } else {
+    document.getElementById("configWarning").classList.add("show");
+  }
+
+  // ======================================================
+  // Lógica do formulário multi-step
+  // ======================================================
+  const steps = Array.from(document.querySelectorAll(".step"));
+  const totalSteps = steps.length;
+  let current = 1;
+
+  const progressFill = document.getElementById("progressFill");
+  const progressTrack = document.getElementById("progressTrack");
+  const btnNext = document.getElementById("btnNext");
+  const btnBack = document.getElementById("btnBack");
+
+  document.getElementById("btnStart").addEventListener("click", () => {
+    document.getElementById("introScreen").classList.remove("active");
+    document.getElementById("quizForm").style.display = "";
+    document.getElementById("navRow").style.display = "";
+    progressTrack.style.display = "";
+    goToStep(1);
+  });
+
+  const answers = {
+    quemVai: "", comoUsar: "", dispositivos: []
+  };
+
+  function setupSingleSelect(containerId, field, onChange){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    const cards = container.querySelectorAll(".option-card");
+    cards.forEach(card => {
+      card.addEventListener("click", () => {
+        cards.forEach(c => c.classList.remove("checked"));
+        card.classList.add("checked");
+        card.querySelector("input").checked = true;
+        answers[field] = card.dataset.value;
+        if(onChange) onChange(card.dataset.value);
+        hideError(current);
+      });
+    });
+  }
+
+  function setupMultiSelect(containerId, field){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    const cards = container.querySelectorAll(".option-card");
+    cards.forEach(card => {
+      card.addEventListener("click", () => {
+        const input = card.querySelector("input");
+        const nowChecked = !card.classList.contains("checked");
+        card.classList.toggle("checked", nowChecked);
+        input.checked = nowChecked;
+        if(nowChecked){
+          answers[field].push(card.dataset.value);
+        } else {
+          answers[field] = answers[field].filter(v => v !== card.dataset.value);
+        }
+        hideError(current);
+      });
+    });
+  }
+
+  setupSingleSelect("quemVai", "quemVai", (val) => {
+    document.getElementById("quemVaiOutroWrap").classList.toggle("show", val === "Outro");
+  });
+  setupSingleSelect("comoUsar", "comoUsar");
+  setupMultiSelect("dispositivos", "dispositivos");
+
+  function hideError(step){
+    ["err1","err2","err3b","err4a","err4b"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.classList.remove("show");
+    });
+  }
+  function showError(id){
+    const err = document.getElementById(id);
+    if(err) err.classList.add("show");
+  }
+
+  function validateStep(step){
+    if(step === 1){
+      const nome = document.getElementById("nome").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const emailOk = /\S+@\S+\.\S+/.test(email);
+      if(nome.length === 0 || !emailOk){ showError("err1"); return false; }
+      return true;
+    }
+    if(step === 2){
+      if(!answers.quemVai){ showError("err2"); return false; }
+      if(answers.quemVai === "Outro" && document.getElementById("quemVaiOutro").value.trim().length === 0){ showError("err2"); return false; }
+      return true;
+    }
+    if(step === 3){
+      if(document.getElementById("funcionamento").value.trim().length === 0){ showError("err3b"); return false; }
+      return true;
+    }
+    if(step === 4){
+      let ok = true;
+      if(!answers.comoUsar){ showError("err4a"); ok = false; }
+      if(answers.dispositivos.length === 0){ showError("err4b"); ok = false; }
+      return ok;
+    }
+    return true;
+  }
+
+  function goToStep(n){
+    steps.forEach(s => s.classList.remove("active"));
+    steps.find(s => s.dataset.step == n).classList.add("active");
+    current = n;
+    progressFill.style.width = ((n) / totalSteps * 100) + "%";
+    btnBack.classList.toggle("invisible", n === 1);
+    btnNext.textContent = n === totalSteps ? "Enviar respostas" : "Continuar";
+  }
+
+  btnNext.addEventListener("click", async () => {
+    if(!validateStep(current)) return;
+    hideError(current);
+
+    if(current < totalSteps){
+      goToStep(current + 1);
+      return;
+    }
+    await submitAnswers();
+  });
+
+  btnBack.addEventListener("click", () => {
+    if(current > 1) goToStep(current - 1);
+  });
+
+  async function submitAnswers(){
+    btnNext.disabled = true;
+    btnNext.textContent = "Enviando...";
+
+    const payload = {
+      nome: document.getElementById("nome").value.trim(),
+      empresa: document.getElementById("empresa").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      nomeApp: document.getElementById("nomeApp").value.trim(),
+      quemVai: answers.quemVai,
+      quemVaiOutro: document.getElementById("quemVaiOutro").value.trim(),
+      funcionamento: document.getElementById("funcionamento").value.trim(),
+      comoUsar: answers.comoUsar,
+      dispositivos: answers.dispositivos,
+      corPrincipal: document.getElementById("corPrincipal").value.trim(),
+      referenciaVisual: document.getElementById("referenciaVisual").value.trim(),
+      referenciaApp: document.getElementById("referenciaApp").value.trim(),
+      referenciaGosta: document.getElementById("referenciaGosta").value.trim(),
+      tipoDados: document.getElementById("tipoDados").value.trim(),
+      seguranca: document.getElementById("seguranca").value.trim(),
+      prazo: document.getElementById("prazo").value.trim(),
+      criadoEm: firebaseReady ? serverTimestamp() : new Date().toISOString(),
+      origem: window.location.href
+    };
+
+    try {
+      if(!firebaseReady) throw new Error("Firebase não configurado ainda.");
+      await addDoc(collection(db, NOME_DA_COLECAO), payload);
+      document.getElementById("quizForm").style.display = "none";
+      document.getElementById("navRow").style.display = "none";
+      document.getElementById("successScreen").classList.add("active");
+    } catch (e) {
+      console.error(e);
+      btnNext.disabled = false;
+      btnNext.textContent = "Enviar respostas";
+      const step = steps[current-1];
+      let err = step.querySelector(".submit-error");
+      if(!err){
+        err = document.createElement("div");
+        err.className = "error-msg show submit-error";
+        step.appendChild(err);
+      }
+      err.textContent = "Não consegui enviar. Verifique sua conexão e tente novamente.";
+      err.classList.add("show");
+    }
+  }
+
+</script>
+
+</body>
+</html>
